@@ -106,13 +106,6 @@ module.exports = yeoman.generators.Base.extend({
             },
             {
                 type: 'input',
-                name: 'DB_PORT',
-                message: 'Enter Database port',
-                default: '3306'
-            },
-
-            {
-                type: 'input',
                 name: 'WP_ENV',
                 message: 'Enter env',
                 default: 'development'
@@ -215,9 +208,15 @@ module.exports = yeoman.generators.Base.extend({
             var done = this.async();
             var _this = this;
 
-            this.spawnCommand('git', ['clone', 'https://github.com/undefinedio/stash', '.'])
+            this.spawnCommand('git', ['clone', 'https://github.com/undefinedio/stash', 'tmp'])
                 .on('close', function () {
-                    done();
+                    _this.spawnCommand('cp', ['-R', 'tmp/', '.'])
+                        .on('close', function () {
+                            _this.spawnCommand('rm', ['-rf', 'tmp', '.git'])
+                                .on('close', function () {
+                                    done();
+                                });
+                        });
                 });
         },
 
@@ -288,7 +287,7 @@ module.exports = yeoman.generators.Base.extend({
                 data = data.replace(/DB_USER=root/g, 'DB_USER=' + _this.props.DB_USER);
                 data = data.replace(/DB_PASSWORD=root/g, 'DB_PASSWORD=' + _this.props.DB_PASSWORD);
                 data = data.replace(/DB_HOST=localhost/g, 'DB_HOST=' + _this.props.DB_HOST);
-                data = data.replace(/WP_ENV=development/g, 'DB_HOST=' + _this.props.WP_ENV);
+                data = data.replace(/WP_ENV=development/g, 'WP_ENV=' + _this.props.WP_ENV);
                 data = data.replace(/WP_HOME=http:\/\/example\.com/g, 'WP_HOME=http://' + _this.props.WP_URL);
                 data = data.replace(/WP_SITEURL=http:\/\/example\.com\/wp/g, 'WP_SITEURL=http://' + _this.props.WP_HOME + '/wp');
 
@@ -404,7 +403,7 @@ module.exports = yeoman.generators.Base.extend({
             var _this = this;
 
             if (this.props.PLUGIN_DEBUG) {
-                this.spawnCommand('composer', ['require-dev', 'wpackagist-plugin/debug-bar', 'wpackagist-plugin/debug-bar-cron', 'wpackagist-plugin/debug-bar-actions-and-filters-addon', 'wpackagist-plugin/debug-bar-timber'])
+                this.spawnCommand('composer', ['wpackagist-plugin/debug-bar', 'wpackagist-plugin/debug-bar-cron', 'wpackagist-plugin/debug-bar-actions-and-filters-addon', 'wpackagist-plugin/debug-bar-timber', '-dev'])
                     .on('close', function () {
                         done();
                     })
@@ -437,7 +436,7 @@ module.exports = yeoman.generators.Base.extend({
             var done = this.async();
             var _this = this;
 
-            this.spawnCommand('wp', ['rewrite', 'structure', '\'/%postname%/\'', '--hard'])
+            this.spawnCommand('wp', ['rewrite', 'structure', '/%postname%/', '--hard'])
                 .on('close', function () {
                     done();
                 });
